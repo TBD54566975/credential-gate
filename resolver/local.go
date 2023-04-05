@@ -53,3 +53,13 @@ func getMethodForDID(did string) (didsdk.Method, error) {
 	}
 	return didsdk.Method(split[1]), nil
 }
+
+// SupportedLocalResolutionMethods returns the list of methods supported for local resolution
+func SupportedLocalResolutionMethods() []didsdk.Method {
+	return []didsdk.Method{
+		didsdk.KeyMethod,
+		didsdk.WebMethod,
+		didsdk.PKHMethod,
+		didsdk.PeerMethod,
+	}
+}
