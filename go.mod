@@ -8,4 +8,7 @@ require (
 	golang.org/x/term v0.6.0
 )
 
-require golang.org/x/sys v0.6.0 // indirect
+require (
+	github.com/TBD54566975/ssi-sdk v0.0.3-alpha.0.20230401051839-bca28f8b0fea // indirect
+	golang.org/x/sys v0.6.0 // indirect
+)

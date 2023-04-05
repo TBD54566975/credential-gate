@@ -1,3 +1,5 @@
+github.com/TBD54566975/ssi-sdk v0.0.3-alpha.0.20230401051839-bca28f8b0fea h1:+0dl8nqYYkewqiiYKxhk3RK7ivOOzweeYa08DFOU3fE=
+github.com/TBD54566975/ssi-sdk v0.0.3-alpha.0.20230401051839-bca28f8b0fea/go.mod h1:9SNGqEkRihpNbgilFDRRmgi8Gi/l7/l0eyO+3Prubro=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
