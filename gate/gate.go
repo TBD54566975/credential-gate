@@ -1,7 +1,6 @@
 package gate
 
 import (
-	"github.com/TBD54566975/ssi-sdk/credential"
 	"github.com/TBD54566975/ssi-sdk/credential/exchange"
 	"github.com/TBD54566975/ssi-sdk/credential/signing"
 	didsdk "github.com/TBD54566975/ssi-sdk/did"
@@ -36,7 +35,7 @@ func NewCredentialGate(config CredentialGateConfig) (*CredentialGate, error) {
 		return nil, util.LoggingErrorMsg(err, "invalid config")
 	}
 
-	r, err := resolver.NewResolver([]string{"key", "web", "pkh", "peer"}, config.UniversalResolverURL)
+	r, err := resolver.NewResolver(localResolverMethods(), config.UniversalResolverURL)
 	if err != nil {
 		return nil, util.LoggingErrorMsg(err, "failed to create resolver")
 	}
@@ -47,36 +46,28 @@ func NewCredentialGate(config CredentialGateConfig) (*CredentialGate, error) {
 	}, nil
 }
 
-// Presentation is a struct that contains sets of VPs and/or VP JWTs, both of which can be used
-// that are to be validated against the credential gate's presentation definition
-type Presentation struct {
-	VerifiablePresentation    *credential.VerifiablePresentation `json:"presentation,omitempty"`
-	VerifiablePresentationJWT *string                            `json:"presentationJwt,omitempty"`
+func localResolverMethods() []didsdk.Method {
+	return []didsdk.Method{didsdk.KeyMethod, didsdk.WebMethod, didsdk.PKHMethod, didsdk.PeerMethod}
 }
 
-func (p Presentation) IsValid() bool {
-	bothEmpty := p.VerifiablePresentation.IsEmpty() && p.VerifiablePresentationJWT == nil
-	bothPresent := !p.VerifiablePresentation.IsEmpty() && p.VerifiablePresentationJWT != nil
-	return !bothEmpty && !bothPresent
-}
+func (cg *CredentialGate) ValidatePresentation(presentationJWT string) (bool, error) {
+	// extract the VP signer's DID, which is set as the iss property as per https://w3c.github.io/vc-jwt/#vp-jwt-1.1
 
-func (cg *CredentialGate) ValidatePresentation(presentation Presentation) (bool, error) {
-	if !presentation.IsValid() {
-		return false, util.LoggingErrorMsg(nil, "invalid presentation")
+	// extract the VP signer's KID from the JWT header
+	// the KID could be fully qualified, or just the key id, so we need to resolve the DID to get the full KID
+	// and search for the key in the DID document by both the full KID and the key id
+
+	// construct a verifier after resolving the VP signer's DID
+
+	// verify the VP JWT's signature
+	if _, err := signing.VerifyVerifiablePresentationJWT(verifier, presentationJWT); err != nil {
+		return false, util.LoggingErrorMsg(err, "failed to verify VP JWT")
 	}
 
-	// handle having a VP
-	if !presentation.VerifiablePresentation.IsEmpty() {
-		return false, util.LoggingErrorMsg(nil, "Linked Data VP not yet supported")
-	}
-
-	// handle having a VP JWT
-	if presentation.VerifiablePresentationJWT != nil {
-		vpJWT, err := signing.ParseVerifiablePresentationFromJWT(*presentation.VerifiablePresentationJWT)
-		if err != nil {
-			return false, util.LoggingErrorMsg(err, "failed to parse VP JWT")
-		}
-		vp = *vpJWT
+	// validate the VP against the presentation definition
+	presentation, err := signing.ParseVerifiablePresentationFromJWT(presentationJWT)
+	if err != nil {
+		return false, util.LoggingErrorMsg(err, "failed to parse VP from JWT")
 	}
 
 	return false, nil

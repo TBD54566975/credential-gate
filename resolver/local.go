@@ -9,7 +9,7 @@ import (
 )
 
 // newLocalResolver builds a multi method DID resolver from a list of methods to support local resolution for
-func newLocalResolver(methods []string) (*didsdk.MultiMethodResolver, error) {
+func newLocalResolver(methods []didsdk.Method) (*didsdk.MultiMethodResolver, error) {
 	if len(methods) == 0 {
 		return nil, errors.New("no methods provided")
 	}
@@ -28,8 +28,8 @@ func newLocalResolver(methods []string) (*didsdk.MultiMethodResolver, error) {
 }
 
 // all possible local resolvers
-func getKnownResolver(method string) (didsdk.Resolver, error) {
-	switch didsdk.Method(method) {
+func getKnownResolver(method didsdk.Method) (didsdk.Resolver, error) {
+	switch method {
 	case didsdk.KeyMethod:
 		return new(didsdk.KeyResolver), nil
 	case didsdk.WebMethod:
@@ -52,14 +52,4 @@ func getMethodForDID(did string) (didsdk.Method, error) {
 		return "", errors.New("malformed did: did must start with `did`")
 	}
 	return didsdk.Method(split[1]), nil
-}
-
-// SupportedLocalResolutionMethods returns the list of methods supported for local resolution
-func SupportedLocalResolutionMethods() []didsdk.Method {
-	return []didsdk.Method{
-		didsdk.KeyMethod,
-		didsdk.WebMethod,
-		didsdk.PKHMethod,
-		didsdk.PeerMethod,
-	}
 }

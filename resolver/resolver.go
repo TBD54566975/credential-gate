@@ -17,7 +17,7 @@ type Resolver struct {
 
 // NewResolver creates a new ServiceResolver instance which can resolve DIDs using a combination of local and
 // universal resolvers.
-func NewResolver(localResolutionMethods []string, universalResolverURL string) (*Resolver, error) {
+func NewResolver(localResolutionMethods []didsdk.Method, universalResolverURL string) (*Resolver, error) {
 	if len(localResolutionMethods) == 0 && universalResolverURL == "" {
 		return nil, fmt.Errorf("must provide at least one resolution method")
 	}
@@ -68,7 +68,6 @@ func (r *Resolver) Resolve(ctx context.Context, did string, opts ...didsdk.Resol
 		universallyResolvedDID, err := r.ur.Resolve(ctx, did, opts...)
 		if err == nil {
 			return universallyResolvedDID, nil
-
 		}
 		logrus.WithError(err).Error("error resolving DID with universal resolver")
 	}
