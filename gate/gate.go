@@ -1,8 +1,11 @@
 package gate
 
 import (
+	"context"
+
 	"github.com/TBD54566975/ssi-sdk/credential/exchange"
 	"github.com/TBD54566975/ssi-sdk/credential/signing"
+	"github.com/TBD54566975/ssi-sdk/crypto"
 	didsdk "github.com/TBD54566975/ssi-sdk/did"
 	"github.com/TBD54566975/ssi-sdk/util"
 
@@ -52,23 +55,41 @@ func localResolverMethods() []didsdk.Method {
 
 func (cg *CredentialGate) ValidatePresentation(presentationJWT string) (bool, error) {
 	// extract the VP signer's DID, which is set as the iss property as per https://w3c.github.io/vc-jwt/#vp-jwt-1.1
+	token, _, err := signing.ParseVerifiablePresentationFromJWT(presentationJWT)
+	if err != nil {
+		return false, util.LoggingErrorMsg(err, "parsing VP from JWT")
+	}
+	issuer := token.Issuer()
+	kid, ok := token.Get("kid")
+	if !ok {
+		return false, util.LoggingErrorMsg(err, "getting kid from VP JWT")
+	}
+	kidStr, ok := kid.(string)
+	if !ok {
+		return false, util.LoggingErrorMsg(err, "casting kid to string")
+	}
 
-	// extract the VP signer's KID from the JWT header
-	// the KID could be fully qualified, or just the key id, so we need to resolve the DID to get the full KID
-	// and search for the key in the DID document by both the full KID and the key id
+	// resolve the VP signer's DID
+	did, err := cg.resolver.Resolve(context.Background(), issuer)
+	if err != nil {
+		return false, util.LoggingErrorMsg(err, "resolving VP signer's DID")
+	}
+	pubKey, err := GetKeyFromVerificationInformation(did.Document, kidStr)
+	if err != nil {
+		return false, util.LoggingErrorMsg(err, "getting public key from DID document")
+	}
 
 	// construct a verifier after resolving the VP signer's DID
+	verifier, err := crypto.NewJWTVerifier(did.ID, kidStr, pubKey)
+	if err != nil {
+		return false, util.LoggingErrorMsg(err, "constructing JWT verifier")
+	}
 
 	// verify the VP JWT's signature
-	if _, err := signing.VerifyVerifiablePresentationJWT(verifier, presentationJWT); err != nil {
+	if _, _, err := signing.VerifyVerifiablePresentationJWT(*verifier, presentationJWT); err != nil {
 		return false, util.LoggingErrorMsg(err, "failed to verify VP JWT")
 	}
 
 	// validate the VP against the presentation definition
-	presentation, err := signing.ParseVerifiablePresentationFromJWT(presentationJWT)
-	if err != nil {
-		return false, util.LoggingErrorMsg(err, "failed to parse VP from JWT")
-	}
-
-	return false, nil
+	return true, nil
 }
