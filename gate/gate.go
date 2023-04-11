@@ -25,6 +25,8 @@ type CredentialGateConfig struct {
 	// PresentationDefinition is the presentation definition that this credential gate will
 	// use to validate credentials against
 	PresentationDefinition exchange.PresentationDefinition `json:"presentationDefinition" validate:"required"`
+
+	// TODO(gabe) custom credential handler logic https://github.com/TBD54566975/credential-gate/issues/4
 }
 
 type CredentialGate struct {
@@ -61,7 +63,7 @@ func (cg *CredentialGate) ValidatePresentationSubmission(presentationSubmissionJ
 		return false, util.LoggingErrorMsg(err, "parsing VP from JWT")
 	}
 	if vp.PresentationSubmission == nil {
-		// TODO(gabe): in-place build a presentation submission from the VP
+		// TODO(gabe): in-place build a presentation submission from the VP https://github.com/TBD54566975/credential-gate/issues/5
 		return false, util.LoggingErrorMsg(err, "no presentation submission found in VP")
 	}
 
