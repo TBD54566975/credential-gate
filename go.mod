@@ -3,7 +3,7 @@ module github.com/TBD54566975/credential-gate
 go 1.20
 
 require (
-	github.com/TBD54566975/ssi-sdk v0.0.3-alpha.0.20230407165123-08475b480db4
+	github.com/TBD54566975/ssi-sdk v0.0.3-alpha.0.20230410220001-cbd9818e8367
 	github.com/goccy/go-json v0.10.2
 	github.com/lestrrat-go/jwx/v2 v2.0.9
 	github.com/magefile/mage v1.14.0

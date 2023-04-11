@@ -8,6 +8,7 @@ import (
 	"github.com/TBD54566975/ssi-sdk/crypto"
 	didsdk "github.com/TBD54566975/ssi-sdk/did"
 	"github.com/TBD54566975/ssi-sdk/util"
+	"github.com/lestrrat-go/jwx/v2/jws"
 
 	"github.com/TBD54566975/credential-gate/resolver"
 )
@@ -55,16 +56,16 @@ func localResolverMethods() []didsdk.Method {
 
 func (cg *CredentialGate) ValidatePresentation(presentationJWT string) (bool, error) {
 	// extract the VP signer's DID, which is set as the iss property as per https://w3c.github.io/vc-jwt/#vp-jwt-1.1
-	token, _, err := signing.ParseVerifiablePresentationFromJWT(presentationJWT)
+	headers, token, _, err := signing.ParseVerifiablePresentationFromJWT(presentationJWT)
 	if err != nil {
 		return false, util.LoggingErrorMsg(err, "parsing VP from JWT")
 	}
 	issuer := token.Issuer()
-	kid, ok := token.Get("kid")
+	maybeKID, ok := headers.Get(jws.KeyIDKey)
 	if !ok {
 		return false, util.LoggingErrorMsg(err, "getting kid from VP JWT")
 	}
-	kidStr, ok := kid.(string)
+	kid, ok := maybeKID.(string)
 	if !ok {
 		return false, util.LoggingErrorMsg(err, "casting kid to string")
 	}
@@ -74,19 +75,19 @@ func (cg *CredentialGate) ValidatePresentation(presentationJWT string) (bool, er
 	if err != nil {
 		return false, util.LoggingErrorMsg(err, "resolving VP signer's DID")
 	}
-	pubKey, err := GetKeyFromVerificationInformation(did.Document, kidStr)
+	pubKey, err := didsdk.GetKeyFromVerificationMethod(did.Document, kid)
 	if err != nil {
 		return false, util.LoggingErrorMsg(err, "getting public key from DID document")
 	}
 
 	// construct a verifier after resolving the VP signer's DID
-	verifier, err := crypto.NewJWTVerifier(did.ID, kidStr, pubKey)
+	verifier, err := crypto.NewJWTVerifier(did.ID, kid, pubKey)
 	if err != nil {
 		return false, util.LoggingErrorMsg(err, "constructing JWT verifier")
 	}
 
 	// verify the VP JWT's signature
-	if _, _, err := signing.VerifyVerifiablePresentationJWT(*verifier, presentationJWT); err != nil {
+	if _, _, _, err := signing.VerifyVerifiablePresentationJWT(*verifier, presentationJWT); err != nil {
 		return false, util.LoggingErrorMsg(err, "failed to verify VP JWT")
 	}
 
