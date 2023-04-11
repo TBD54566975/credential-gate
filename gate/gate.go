@@ -54,12 +54,17 @@ func localResolverMethods() []didsdk.Method {
 	return []didsdk.Method{didsdk.KeyMethod, didsdk.WebMethod, didsdk.PKHMethod, didsdk.PeerMethod}
 }
 
-func (cg *CredentialGate) ValidatePresentation(presentationJWT string) (bool, error) {
+func (cg *CredentialGate) ValidatePresentationSubmission(presentationSubmissionJWT string) (bool, error) {
 	// extract the VP signer's DID, which is set as the iss property as per https://w3c.github.io/vc-jwt/#vp-jwt-1.1
-	headers, token, _, err := signing.ParseVerifiablePresentationFromJWT(presentationJWT)
+	headers, token, vp, err := signing.ParseVerifiablePresentationFromJWT(presentationSubmissionJWT)
 	if err != nil {
 		return false, util.LoggingErrorMsg(err, "parsing VP from JWT")
 	}
+	if vp.PresentationSubmission == nil {
+		// TODO(gabe): in-place build a presentation submission from the VP
+		return false, util.LoggingErrorMsg(err, "no presentation submission found in VP")
+	}
+
 	issuer := token.Issuer()
 	maybeKID, ok := headers.Get(jws.KeyIDKey)
 	if !ok {
@@ -73,24 +78,22 @@ func (cg *CredentialGate) ValidatePresentation(presentationJWT string) (bool, er
 	// resolve the VP signer's DID
 	did, err := cg.resolver.Resolve(context.Background(), issuer)
 	if err != nil {
-		return false, util.LoggingErrorMsg(err, "resolving VP signer's DID")
+		return false, util.LoggingErrorMsg(err, "resolving VP submission signer's DID")
 	}
 	pubKey, err := didsdk.GetKeyFromVerificationMethod(did.Document, kid)
 	if err != nil {
-		return false, util.LoggingErrorMsg(err, "getting public key from DID document")
+		return false, util.LoggingErrorMsg(err, "getting public key from VP signer's DID")
 	}
 
-	// construct a verifier after resolving the VP signer's DID
+	// verify the presentation submission
 	verifier, err := crypto.NewJWTVerifier(did.ID, kid, pubKey)
 	if err != nil {
 		return false, util.LoggingErrorMsg(err, "constructing JWT verifier")
 	}
-
-	// verify the VP JWT's signature
-	if _, _, _, err := signing.VerifyVerifiablePresentationJWT(*verifier, presentationJWT); err != nil {
-		return false, util.LoggingErrorMsg(err, "failed to verify VP JWT")
+	if err = exchange.VerifyPresentationSubmission(*verifier, exchange.JWTVPTarget, cg.config.PresentationDefinition,
+		[]byte(presentationSubmissionJWT)); err != nil {
+		return false, util.LoggingErrorMsg(err, "verifying presentation submission")
 	}
 
-	// validate the VP against the presentation definition
 	return true, nil
 }
