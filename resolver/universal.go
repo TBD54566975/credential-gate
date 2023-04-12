@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	urllib "net/url"
 
 	"github.com/pkg/errors"
 
@@ -28,10 +29,39 @@ func newUniversalResolver(url string) (*universalResolver, error) {
 	if url == "" {
 		return nil, errors.New("universal resolver url cannot be empty")
 	}
-	return &universalResolver{
+	parsedURL, err := urllib.ParseRequestURI(url)
+	if err != nil {
+		return nil, errors.Wrap(err, "invalid resolver URL")
+	}
+	if parsedURL.Scheme != "https" {
+		return nil, errors.New("invalid resolver URL scheme; must use https")
+	}
+	ur := universalResolver{
 		client: http.DefaultClient,
 		url:    url,
-	}, nil
+	}
+	if err := ur.Health(); err != nil {
+		return nil, errors.Wrap(err, "checking universal resolver health")
+	}
+	return &ur, nil
+}
+
+func (ur *universalResolver) Health() error {
+	url := ur.url + "/1.0/methods"
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
+	if err != nil {
+		return errors.Wrap(err, "creating health check request")
+	}
+
+	resp, err := ur.client.Do(req)
+	if err != nil {
+		return errors.Wrap(err, "performing http get")
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.New("universal resolver is not healthy")
+	}
+	return nil
 }
 
 // Resolve results resolution results by doing a GET on <url>/1.0.identifiers/<did>.
