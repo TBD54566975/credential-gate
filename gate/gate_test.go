@@ -109,7 +109,64 @@ func TestCredentialGateConfig(t *testing.T) {
 }
 
 func TestCredentialGate(t *testing.T) {
-	t.Run("happy path - accept any valid JWT VP, EdDSA, with an issuer", func(tt *testing.T) {
+	t.Run("jwt but not a presentation submission", func(tt *testing.T) {
+		presentationDefinition := exchange.PresentationDefinition{
+			ID: uuid.New().String(),
+			InputDescriptors: []exchange.InputDescriptor{
+				{
+					ID: uuid.New().String(),
+					Format: &exchange.ClaimFormat{
+						JWTVC: &exchange.JWTType{Alg: []crypto.SignatureAlgorithm{crypto.EdDSA}},
+					},
+					Constraints: &exchange.Constraints{
+						Fields: []exchange.Field{
+							{
+								Path: []string{"$.credentialSubject.id"},
+							},
+						},
+					},
+				},
+			},
+		}
+		gate, err := NewCredentialGate(CredentialGateConfig{
+			PresentationDefinition: presentationDefinition,
+		})
+		assert.NoError(tt, err)
+		assert.NotEmpty(tt, gate)
+
+		privKey, didKey, err := did.GenerateDIDKey(crypto.Ed25519)
+		assert.NoError(tt, err)
+		assert.NotEmpty(tt, privKey)
+		assert.NotEmpty(tt, didKey)
+
+		// signer for the submission
+		expanded, err := didKey.Expand()
+		assert.NoError(tt, err)
+		signer, err := crypto.NewJWTSigner(didKey.String(), expanded.VerificationMethod[0].ID, privKey)
+		assert.NoError(tt, err)
+		assert.NotEmpty(tt, signer)
+
+		// self sign a credential for the submission
+		testCredential := credential.VerifiableCredential{
+			Context:      []any{"https://www.w3.org/2018/credentials/v1"},
+			Type:         []string{"VerifiableCredential"},
+			Issuer:       didKey.String(),
+			IssuanceDate: time.Now().Format(time.RFC3339),
+			CredentialSubject: map[string]any{
+				"id": didKey.String(),
+			},
+		}
+		testVCJWT, err := signing.SignVerifiableCredentialJWT(*signer, testCredential)
+		assert.NoError(tt, err)
+		assert.NotEmpty(tt, testVCJWT)
+
+		valid, err := gate.ValidatePresentationSubmission(string(testVCJWT))
+		assert.Error(tt, err)
+		assert.Contains(tt, err.Error(), "parsing VP from JWT")
+		assert.False(tt, valid)
+	})
+
+	t.Run("happy path - accept any valid JWT VP, EdDSA, with a credential subject", func(tt *testing.T) {
 		requesterID := "requester"
 		presentationDefinition := exchange.PresentationDefinition{
 			ID: uuid.New().String(),
