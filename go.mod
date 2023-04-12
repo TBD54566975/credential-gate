@@ -4,12 +4,14 @@ go 1.20
 
 require (
 	github.com/TBD54566975/ssi-sdk v0.0.3-alpha.0.20230410220001-cbd9818e8367
+	github.com/goccy/go-json v0.10.2
+	github.com/google/uuid v1.3.0
 	github.com/lestrrat-go/jwx/v2 v2.0.9
 	github.com/magefile/mage v1.14.0
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.2
-	golang.org/x/term v0.6.0
+	golang.org/x/term v0.7.0
 	gopkg.in/h2non/gock.v1 v1.1.2
 )
 
@@ -20,8 +22,6 @@ require (
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.12.0 // indirect
-	github.com/goccy/go-json v0.10.2 // indirect
-	github.com/google/uuid v1.3.0 // indirect
 	github.com/h2non/parth v0.0.0-20190131123155-b4df798d6542 // indirect
 	github.com/hyperledger/aries-framework-go v0.1.9 // indirect
 	github.com/hyperledger/aries-framework-go/spi v0.0.0-20221025204933-b807371b6f1e // indirect
@@ -44,7 +44,7 @@ require (
 	github.com/pquerna/cachecontrol v0.1.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v5 v5.2.0 // indirect
 	golang.org/x/crypto v0.7.0 // indirect
-	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/sys v0.7.0 // indirect
 	golang.org/x/text v0.8.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
