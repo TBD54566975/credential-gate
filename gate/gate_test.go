@@ -97,7 +97,8 @@ func TestCredentialGateConfig(t *testing.T) {
 	t.Run("good config - good resolver", func(tt *testing.T) {
 		gock.New("https://dev.uniresolver.io").
 			Get("/methods").
-			Reply(200)
+			Reply(200).
+			BodyString(`["web"]`)
 
 		gate, err := NewCredentialGate(CredentialGateConfig{
 			PresentationDefinition: validPresentationDefinition,

@@ -76,8 +76,9 @@ func TestResolver(t *testing.T) {
 
 	t.Run("valid resolver url; health check passes", func(tt *testing.T) {
 		gock.New("https://dev.uniresolver.io").
-			Get("/methods").
-			Reply(200)
+			Get("/1.0/methods").
+			Reply(200).
+			BodyString(`["web"]`)
 		defer gock.Off()
 
 		resolver, err := NewResolver(nil, "https://dev.uniresolver.io")
@@ -87,8 +88,9 @@ func TestResolver(t *testing.T) {
 
 	t.Run("resolution of local and remote DIDs", func(tt *testing.T) {
 		gock.New("https://dev.uniresolver.io").
-			Get("/methods").
-			Reply(200)
+			Get("/1.0/methods").
+			Reply(200).
+			BodyString(`["web"]`)
 
 		gock.New("https://dev.uniresolver.io").
 			Get("/1.0/identifiers/did:web:did.actor:alice").

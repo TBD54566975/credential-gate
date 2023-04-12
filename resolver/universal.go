@@ -8,11 +8,10 @@ import (
 	"net/http"
 	urllib "net/url"
 
+	"github.com/TBD54566975/ssi-sdk/util"
 	"github.com/pkg/errors"
 
 	didsdk "github.com/TBD54566975/ssi-sdk/did"
-
-	"github.com/sirupsen/logrus"
 )
 
 // universalResolver is a struct that implements the Resolver interface. It calls the universal resolver endpoint
@@ -40,25 +39,14 @@ func newUniversalResolver(url string) (*universalResolver, error) {
 		client: http.DefaultClient,
 		url:    url,
 	}
-	if err := ur.Health(); err != nil {
+	if err = ur.Health(); err != nil {
 		return nil, errors.Wrap(err, "checking universal resolver health")
 	}
 	return &ur, nil
 }
 
 func (ur *universalResolver) Health() error {
-	url := ur.url + "/1.0/methods"
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
-	if err != nil {
-		return errors.Wrap(err, "creating health check request")
-	}
-
-	resp, err := ur.client.Do(req)
-	if err != nil {
-		return errors.Wrap(err, "performing http get")
-	}
-
-	if resp.StatusCode != http.StatusOK {
+	if _, err := ur.GetMethods(true); err != nil {
 		return errors.New("universal resolver is not healthy")
 	}
 	return nil
@@ -88,39 +76,41 @@ func (ur *universalResolver) Resolve(ctx context.Context, did string, _ ...didsd
 	return &result, nil
 }
 
-// Methods returns the methods that this resolver supports
+func (ur *universalResolver) Methods() []didsdk.Method {
+	methods, _ := ur.GetMethods(false)
+	return methods
+}
+
+// GetMethods returns the methods that this resolver supports
 // as per https://github.com/decentralized-identity/universal-resolver/blob/main/swagger/api.yml#L121
 // TODO(gabe) handle cache https://github.com/TBD54566975/credential-gate/issues/8
-func (ur *universalResolver) Methods() []didsdk.Method {
+func (ur *universalResolver) GetMethods(resetCache bool) ([]didsdk.Method, error) {
 	// check if we've cached the methods
-	if len(ur.supportedMethods) > 0 {
-		return ur.supportedMethods
+	if len(ur.supportedMethods) > 0 && !resetCache {
+		return ur.supportedMethods, nil
 	}
 
 	url := ur.url + "/1.0/methods"
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
 	if err != nil {
-		logrus.WithError(err).Error("Failed to create request for universal resolver methods")
+		return nil, util.LoggingErrorMsg(err, "creating request for universal resolver methods")
 	}
 
 	resp, err := ur.client.Do(req)
 	if err != nil {
-		logrus.WithError(err).Error("Failed to perform http get for universal resolver methods")
-		return nil
+		return nil, util.LoggingErrorMsg(err, "performing http get for universal resolver methods")
 	}
 
 	respBody, err := io.ReadAll(bufio.NewReader(resp.Body))
 	if err != nil {
-		logrus.WithError(err).Error("Failed to read response body for universal resolver methods")
-		return nil
+		return nil, util.LoggingErrorMsg(err, "reading response body for universal resolver methods")
 	}
 	var methods []didsdk.Method
 	if err = json.Unmarshal(respBody, &methods); err != nil {
-		logrus.WithError(err).Error("Failed to unmarshal response body for universal resolver methods")
-		return nil
+		return nil, util.LoggingErrorMsg(err, "unmarshalling response body for universal resolver methods")
 	}
 
 	// update the method cache
 	ur.supportedMethods = methods
-	return methods
+	return methods, nil
 }
