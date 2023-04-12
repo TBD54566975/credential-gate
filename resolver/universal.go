@@ -90,6 +90,7 @@ func (ur *universalResolver) Resolve(ctx context.Context, did string, _ ...didsd
 
 // Methods returns the methods that this resolver supports
 // as per https://github.com/decentralized-identity/universal-resolver/blob/main/swagger/api.yml#L121
+// TODO(gabe) handle cache https://github.com/TBD54566975/credential-gate/issues/8
 func (ur *universalResolver) Methods() []didsdk.Method {
 	// check if we've cached the methods
 	if len(ur.supportedMethods) > 0 {

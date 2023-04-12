@@ -64,7 +64,7 @@ func (r *Resolver) Resolve(ctx context.Context, did string, opts ...didsdk.Resol
 	}
 
 	// next, resolution with the universal resolver
-	if r.ur != nil {
+	if r.ur != nil && isSupportMethod(method, r.ur.Methods()) {
 		universallyResolvedDID, err := r.ur.Resolve(ctx, did, opts...)
 		if err == nil {
 			return universallyResolvedDID, nil

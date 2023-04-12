@@ -218,9 +218,9 @@ func TestCredentialGate(t *testing.T) {
 		assert.NoError(tt, err)
 		assert.NotEmpty(tt, testVCJWT)
 
-		_, _, vsJSON, err := signing.ParseVerifiableCredentialFromJWT(string(testVCJWT))
+		_, _, verifiableCredential, err := signing.ParseVerifiableCredentialFromJWT(string(testVCJWT))
 		assert.NoError(tt, err)
-		vcJSONBytes, err := json.Marshal(vsJSON)
+		vcJSONBytes, err := json.Marshal(verifiableCredential)
 		assert.NoError(tt, err)
 		assert.NotEmpty(tt, vcJSONBytes)
 		presentationClaimJWT := exchange.PresentationClaim{
