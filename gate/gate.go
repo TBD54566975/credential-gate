@@ -9,14 +9,16 @@ import (
 	didsdk "github.com/TBD54566975/ssi-sdk/did"
 	"github.com/TBD54566975/ssi-sdk/util"
 	"github.com/lestrrat-go/jwx/v2/jws"
+	"github.com/pkg/errors"
 
 	"github.com/TBD54566975/credential-gate/resolver"
 )
 
 type CredentialGateConfig struct {
+	// TODO(gabe) allow configuration of supported DID methods https://github.com/TBD54566975/credential-gate/issues/7
 	// SupportedDIDMethods is a list of DID methods that are supported by this credential gate
 	// If empty, all DID methods are supported
-	SupportedDIDMethods []didsdk.Method `json:"supportedDidMethods,omitempty"`
+	// SupportedDIDMethods []didsdk.Method `json:"supportedDidMethods,omitempty"`
 
 	// UniversalResolverURL is the URL of the universal resolver to use for resolving DIDs
 	// If empty, a universal resolver will not be configured
@@ -29,6 +31,16 @@ type CredentialGateConfig struct {
 	// TODO(gabe) custom credential handler logic https://github.com/TBD54566975/credential-gate/issues/4
 }
 
+func (c CredentialGateConfig) IsValid() error {
+	if err := util.IsValidStruct(c); err != nil {
+		return errors.Wrap(err, "invalid config struct")
+	}
+	if err := c.PresentationDefinition.IsValid(); err != nil {
+		return errors.Wrap(err, "invalid presentation definition")
+	}
+	return nil
+}
+
 type CredentialGate struct {
 	resolver *resolver.Resolver
 	config   CredentialGateConfig
@@ -37,7 +49,7 @@ type CredentialGate struct {
 // NewCredentialGate creates a new CredentialGate instance using the given config
 // which is used to validate credentials against the given presentation definition
 func NewCredentialGate(config CredentialGateConfig) (*CredentialGate, error) {
-	if err := util.IsValidStruct(config); err != nil {
+	if err := config.IsValid(); err != nil {
 		return nil, util.LoggingErrorMsg(err, "invalid config")
 	}
 
