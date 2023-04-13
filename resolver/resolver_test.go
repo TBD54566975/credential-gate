@@ -89,6 +89,7 @@ func TestResolver(t *testing.T) {
 	t.Run("resolution of local and remote DIDs", func(tt *testing.T) {
 		gock.New("https://dev.uniresolver.io").
 			Get("/1.0/methods").
+			Persist().
 			Reply(200).
 			BodyString(`["web"]`)
 

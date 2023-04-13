@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	urllib "net/url"
+	"time"
 
 	"github.com/TBD54566975/ssi-sdk/util"
 	"github.com/pkg/errors"
@@ -14,9 +15,12 @@ import (
 	didsdk "github.com/TBD54566975/ssi-sdk/did"
 )
 
+const cacheExpiryDurationSeconds = 24 * 60 * 60 // 24 hours
+
 // universalResolver is a struct that implements the Resolver interface. It calls the universal resolver endpoint
 // to resolve any DID according to https://github.com/decentralized-identity/universal-resolver.
 type universalResolver struct {
+	lastCacheUpdate  int64
 	client           *http.Client
 	url              string
 	supportedMethods []didsdk.Method
@@ -46,7 +50,8 @@ func newUniversalResolver(url string) (*universalResolver, error) {
 }
 
 func (ur *universalResolver) Health() error {
-	if _, err := ur.GetMethods(true); err != nil {
+	ur.resetCache()
+	if _, err := ur.GetMethods(); err != nil {
 		return errors.New("universal resolver is not healthy")
 	}
 	return nil
@@ -77,16 +82,26 @@ func (ur *universalResolver) Resolve(ctx context.Context, did string, _ ...didsd
 }
 
 func (ur *universalResolver) Methods() []didsdk.Method {
-	methods, _ := ur.GetMethods(false)
+	methods, _ := ur.GetMethods()
 	return methods
+}
+
+func (ur *universalResolver) resetCache() {
+	ur.lastCacheUpdate = 0
+	ur.supportedMethods = nil
+}
+
+// cacheReadyForUpdate returns true if the cache is ready to be updated
+func (ur *universalResolver) cacheReadyForUpdate() bool {
+	timeSinceLastUpdate := time.Since(time.UnixMilli(ur.lastCacheUpdate)).Seconds()
+	return ur.lastCacheUpdate == 0 || timeSinceLastUpdate > cacheExpiryDurationSeconds
 }
 
 // GetMethods returns the methods that this resolver supports
 // as per https://github.com/decentralized-identity/universal-resolver/blob/main/swagger/api.yml#L121
-// TODO(gabe) handle cache https://github.com/TBD54566975/credential-gate/issues/8
-func (ur *universalResolver) GetMethods(resetCache bool) ([]didsdk.Method, error) {
+func (ur *universalResolver) GetMethods() ([]didsdk.Method, error) {
 	// check if we've cached the methods
-	if len(ur.supportedMethods) > 0 && !resetCache {
+	if len(ur.supportedMethods) > 0 && !ur.cacheReadyForUpdate() {
 		return ur.supportedMethods, nil
 	}
 
@@ -111,6 +126,7 @@ func (ur *universalResolver) GetMethods(resetCache bool) ([]didsdk.Method, error
 	}
 
 	// update the method cache
+	ur.lastCacheUpdate = time.Now().UnixMilli()
 	ur.supportedMethods = methods
 	return methods, nil
 }
