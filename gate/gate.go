@@ -100,7 +100,7 @@ func (cg *CredentialGate) ValidatePresentationSubmission(presentationSubmissionJ
 	}
 
 	// verify the presentation submission
-	verifier, err := crypto.NewJWTVerifier(did.ID, kid, pubKey)
+	verifier, err := crypto.NewJWTVerifier(did.ID, pubKey)
 	if err != nil {
 		return false, util.LoggingErrorMsg(err, "constructing JWT verifier")
 	}

@@ -11,8 +11,6 @@ import (
 	"github.com/TBD54566975/ssi-sdk/crypto"
 	"github.com/TBD54566975/ssi-sdk/did"
 	"github.com/TBD54566975/ssi-sdk/schema"
-	"github.com/TBD54566975/ssi-sdk/util"
-	"github.com/goccy/go-json"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/h2non/gock.v1"
@@ -122,7 +120,7 @@ func TestCredentialGate(t *testing.T) {
 					Constraints: &exchange.Constraints{
 						Fields: []exchange.Field{
 							{
-								Path: []string{"$.credentialSubject.id"},
+								Path: []string{"$.iss"},
 							},
 						},
 					},
@@ -180,7 +178,11 @@ func TestCredentialGate(t *testing.T) {
 					Constraints: &exchange.Constraints{
 						Fields: []exchange.Field{
 							{
-								Path: []string{"$.credentialSubject.id"},
+								Path: []string{"$.vc.credentialSubject.name"},
+								Filter: &exchange.Filter{
+									Type:    "string",
+									Pattern: "Satoshi",
+								},
 							},
 						},
 					},
@@ -212,20 +214,15 @@ func TestCredentialGate(t *testing.T) {
 			Issuer:       didKey.String(),
 			IssuanceDate: time.Now().Format(time.RFC3339),
 			CredentialSubject: map[string]any{
-				"id": didKey.String(),
+				"id":   didKey.String(),
+				"name": "Satoshi",
 			},
 		}
 		testVCJWT, err := signing.SignVerifiableCredentialJWT(*signer, testCredential)
 		assert.NoError(tt, err)
 		assert.NotEmpty(tt, testVCJWT)
-
-		_, _, verifiableCredential, err := signing.ParseVerifiableCredentialFromJWT(string(testVCJWT))
-		assert.NoError(tt, err)
-		vcJSONBytes, err := json.Marshal(verifiableCredential)
-		assert.NoError(tt, err)
-		assert.NotEmpty(tt, vcJSONBytes)
 		presentationClaimJWT := exchange.PresentationClaim{
-			TokenJSON:                     util.StringPtr(string(vcJSONBytes)),
+			TokenBytes:                    testVCJWT,
 			JWTFormat:                     exchange.JWTVC.Ptr(),
 			SignatureAlgorithmOrProofType: string(crypto.EdDSA),
 		}
