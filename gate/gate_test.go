@@ -159,16 +159,21 @@ func TestCredentialGate(t *testing.T) {
 		assert.NoError(tt, err)
 		assert.NotEmpty(tt, testVCJWT)
 
-		valid, err := gate.ValidatePresentationSubmission(string(testVCJWT))
+		result, err := gate.ValidatePresentationSubmission(string(testVCJWT))
 		assert.Error(tt, err)
 		assert.Contains(tt, err.Error(), "parsing VP from JWT")
-		assert.False(tt, valid)
+		assert.False(tt, result.Valid)
 	})
 
 	t.Run("happy path - accept any valid JWT VP, EdDSA, with a credential subject", func(tt *testing.T) {
 		requesterID := "requester"
 		presentationDefinition := exchange.PresentationDefinition{
 			ID: uuid.New().String(),
+			Format: &exchange.ClaimFormat{
+				JWTVP: &exchange.JWTType{
+					Alg: []crypto.SignatureAlgorithm{crypto.EdDSA},
+				},
+			},
 			InputDescriptors: []exchange.InputDescriptor{
 				{
 					ID: uuid.New().String(),
@@ -233,8 +238,8 @@ func TestCredentialGate(t *testing.T) {
 		assert.NoError(tt, err)
 		assert.NotEmpty(tt, submissionJWT)
 
-		valid, err := gate.ValidatePresentationSubmission(string(submissionJWT))
+		result, err := gate.ValidatePresentationSubmission(string(submissionJWT))
 		assert.NoError(tt, err)
-		assert.True(tt, valid)
+		assert.True(tt, result.Valid)
 	})
 }
