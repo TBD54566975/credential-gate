@@ -30,6 +30,7 @@ func main() {
 		AdminDID:               config.AdminDID.DID,
 		UniversalResolverURL:   config.UniversalResolverURL,
 		PresentationDefinition: config.PresentationDefinition,
+		CustomHandlers:         config.CustomHandlers,
 	})
 	if err != nil {
 		logrus.WithError(err).Fatal("error creating credential gate")

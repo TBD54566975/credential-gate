@@ -8,12 +8,15 @@ import (
 	"github.com/pkg/errors"
 
 	sdkcrypto "github.com/TBD54566975/ssi-sdk/crypto"
+
+	"github.com/TBD54566975/credential-gate/gate"
 )
 
 type serverConfig struct {
 	AdminDID               adminDID
 	PresentationDefinition exchange.PresentationDefinition
 	UniversalResolverURL   string
+	CustomHandlers         map[string]gate.CustomHandler
 }
 
 type adminDID struct {
@@ -47,6 +50,9 @@ func newCredentialGateServerConfig() (*serverConfig, error) {
 		},
 		PresentationDefinition: *definition,
 		UniversalResolverURL:   "https://dev.uniresolver.io",
+		CustomHandlers:         map[string]gate.CustomHandler{
+			// register custom handlers here
+		},
 	}, nil
 }
 
