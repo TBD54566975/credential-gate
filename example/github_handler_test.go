@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/TBD54566975/ssi-sdk/credential/exchange"
 	"github.com/TBD54566975/ssi-sdk/crypto"
 	"github.com/TBD54566975/ssi-sdk/did"
+	"github.com/TBD54566975/ssi-sdk/schema"
 	"github.com/TBD54566975/ssi-sdk/util"
 	"github.com/google/uuid"
 	"github.com/mr-tron/base58"
@@ -21,6 +23,20 @@ var (
 	pubKeyB58  = "CKVrGgFtpyhpcMNpLZn3Am1DCgnbpTh4EvDbkR49hU2J"
 	privKeyB58 = "5aWH9Fd1VyGnzyQSLDCDwgdL5LTFz4P13VbPvXR8HsumB14HesiuA3fDZfVWybmdv94j7aNwnB55WoQtVHQrRbre"
 )
+
+// TestMain is used to set up schema caching in order to load all schemas locally
+func TestMain(m *testing.M) {
+	localSchemas, err := schema.GetAllLocalSchemas()
+	if err != nil {
+		os.Exit(1)
+	}
+	loader, err := schema.NewCachingLoader(localSchemas)
+	if err != nil {
+		os.Exit(1)
+	}
+	loader.EnableHTTPCache()
+	os.Exit(m.Run())
+}
 
 // TestGitHubHandlerIntegration tests the GitHub handler - this is an integration test
 func TestGitHubHandlerIntegration(t *testing.T) {
