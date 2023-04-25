@@ -15,6 +15,7 @@ func main() {
 		logrus.WithError(err).Fatal("error creating credential gate server")
 	}
 	credGate, err := gate.NewCredentialGate(gate.CredentialGateConfig{
+		AdminDID:               config.AdminDID.DID,
 		UniversalResolverURL:   config.UniversalResolverURL,
 		PresentationDefinition: config.PresentationDefinition,
 	})

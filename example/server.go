@@ -9,9 +9,9 @@ import (
 
 	"github.com/TBD54566975/ssi-sdk/credential"
 	"github.com/TBD54566975/ssi-sdk/credential/exchange"
-	"github.com/TBD54566975/ssi-sdk/credential/signing"
 	"github.com/TBD54566975/ssi-sdk/crypto"
 	"github.com/TBD54566975/ssi-sdk/did"
+	"github.com/TBD54566975/ssi-sdk/util"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
@@ -37,14 +37,14 @@ func (s *server) configGetter(w http.ResponseWriter, _ *http.Request) {
 	}
 	jsonResp, err := json.Marshal(resp)
 	if err != nil {
-		logrus.WithError(err).Error("error marshaling serverConfig")
+		logrus.WithError(err).Error("error marshaling server config")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	// return serverConfig
 	if _, err = w.Write(jsonResp); err != nil {
-		logrus.WithError(err).Error("error writing serverConfig")
+		logrus.WithError(err).Error("error writing server config")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -63,7 +63,7 @@ func (s *server) gateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var gr gateResponse
-	result, err := s.gate.ValidatePresentationSubmission(string(body))
+	result, err := s.gate.ValidatePresentationSubmission(r.Context(), string(body))
 	if err != nil {
 		logrus.WithError(err).Error("error validating presentation submission")
 		w.WriteHeader(http.StatusBadRequest)
@@ -188,14 +188,14 @@ func getSamplePresentationSubmission(adminDID string, definition exchange.Presen
 		},
 	}
 
-	sampleJWTVC, err := signing.SignVerifiableCredentialJWT(*signer, sampleCredential)
+	sampleJWTVC, err := credential.SignVerifiableCredentialJWT(*signer, sampleCredential)
 	if err != nil {
 		return nil, err
 	}
 
 	// create the presentation submission
 	presentationClaimJWT := exchange.PresentationClaim{
-		TokenBytes:                    sampleJWTVC,
+		Token:                         util.StringPtr(string(sampleJWTVC)),
 		JWTFormat:                     exchange.JWTVC.Ptr(),
 		SignatureAlgorithmOrProofType: string(crypto.EdDSA),
 	}
@@ -232,7 +232,7 @@ func getInvalidSamplePresentationSubmission(adminDID string, definition exchange
 		},
 	}
 
-	sampleJWTVC, err := signing.SignVerifiableCredentialJWT(*signer, sampleCredential)
+	sampleJWTVC, err := credential.SignVerifiableCredentialJWT(*signer, sampleCredential)
 	if err != nil {
 		return nil, err
 	}
@@ -268,5 +268,5 @@ func getInvalidSamplePresentationSubmission(adminDID string, definition exchange
 	if err != nil {
 		return nil, err
 	}
-	return signing.SignVerifiablePresentationJWT(*signer, signing.JWTVVPParameters{Audience: adminDID}, *vp)
+	return credential.SignVerifiablePresentationJWT(*signer, credential.JWTVVPParameters{Audience: adminDID}, *vp)
 }
