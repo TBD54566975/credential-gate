@@ -15,6 +15,21 @@ type Resolver struct {
 	ur *universalResolver
 }
 
+func (r *Resolver) Methods() []didsdk.Method {
+	uniqueMethods := make(map[didsdk.Method]bool)
+	for _, m := range r.lr.Methods() {
+		uniqueMethods[m] = true
+	}
+	for _, m := range r.ur.Methods() {
+		uniqueMethods[m] = true
+	}
+	methods := make([]didsdk.Method, 0, len(uniqueMethods))
+	for m := range uniqueMethods {
+		methods = append(methods, m)
+	}
+	return methods
+}
+
 // NewResolver creates a new ServiceResolver instance which can resolve DIDs using a combination of local and
 // universal resolvers.
 func NewResolver(localResolutionMethods []didsdk.Method, universalResolverURL string) (*Resolver, error) {

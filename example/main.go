@@ -3,20 +3,34 @@ package main
 import (
 	"net/http"
 
+	"github.com/TBD54566975/ssi-sdk/schema"
 	"github.com/sirupsen/logrus"
 
 	"github.com/TBD54566975/credential-gate/gate"
 )
 
 func main() {
+	// enable local schema caching
+	localSchemas, err := schema.GetAllLocalSchemas()
+	if err != nil {
+		logrus.WithError(err).Fatal("error getting local schemas")
+	}
+	loader, err := schema.NewCachingLoader(localSchemas)
+	if err != nil {
+		logrus.WithError(err).Fatal("error creating schema loader")
+	}
+	loader.EnableHTTPCache()
+
 	// set up gate
 	config, err := newCredentialGateServerConfig()
 	if err != nil {
 		logrus.WithError(err).Fatal("error creating credential gate server")
 	}
 	credGate, err := gate.NewCredentialGate(gate.CredentialGateConfig{
+		AdminDID:               config.AdminDID.DID,
 		UniversalResolverURL:   config.UniversalResolverURL,
 		PresentationDefinition: config.PresentationDefinition,
+		CustomHandlers:         config.CustomHandlers,
 	})
 	if err != nil {
 		logrus.WithError(err).Fatal("error creating credential gate")

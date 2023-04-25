@@ -1,16 +1,17 @@
 package gate
 
 import (
+	"context"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/TBD54566975/ssi-sdk/credential"
 	"github.com/TBD54566975/ssi-sdk/credential/exchange"
-	"github.com/TBD54566975/ssi-sdk/credential/signing"
 	"github.com/TBD54566975/ssi-sdk/crypto"
 	"github.com/TBD54566975/ssi-sdk/did"
 	"github.com/TBD54566975/ssi-sdk/schema"
+	"github.com/TBD54566975/ssi-sdk/util"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/h2non/gock.v1"
@@ -61,6 +62,7 @@ func TestCredentialGateConfig(t *testing.T) {
 
 	t.Run("bad presentation definition in config", func(tt *testing.T) {
 		_, err := NewCredentialGate(CredentialGateConfig{
+			AdminDID: "did:test:admin",
 			PresentationDefinition: exchange.PresentationDefinition{
 				ID: "test",
 				InputDescriptors: []exchange.InputDescriptor{
@@ -77,6 +79,7 @@ func TestCredentialGateConfig(t *testing.T) {
 
 	t.Run("good config", func(tt *testing.T) {
 		gate, err := NewCredentialGate(CredentialGateConfig{
+			AdminDID:               "did:test:admin",
 			PresentationDefinition: validPresentationDefinition,
 		})
 		assert.NoError(tt, err)
@@ -85,6 +88,7 @@ func TestCredentialGateConfig(t *testing.T) {
 
 	t.Run("good config - bad resolver", func(tt *testing.T) {
 		_, err := NewCredentialGate(CredentialGateConfig{
+			AdminDID:               "did:test:admin",
 			PresentationDefinition: validPresentationDefinition,
 			UniversalResolverURL:   "bad",
 		})
@@ -99,6 +103,7 @@ func TestCredentialGateConfig(t *testing.T) {
 			BodyString(`["web"]`)
 
 		gate, err := NewCredentialGate(CredentialGateConfig{
+			AdminDID:               "did:test:admin",
 			PresentationDefinition: validPresentationDefinition,
 			UniversalResolverURL:   "https://dev.uniresolver.io",
 		})
@@ -128,6 +133,7 @@ func TestCredentialGate(t *testing.T) {
 			},
 		}
 		gate, err := NewCredentialGate(CredentialGateConfig{
+			AdminDID:               "did:test:admin",
 			PresentationDefinition: presentationDefinition,
 		})
 		assert.NoError(tt, err)
@@ -155,18 +161,18 @@ func TestCredentialGate(t *testing.T) {
 				"id": didKey.String(),
 			},
 		}
-		testVCJWT, err := signing.SignVerifiableCredentialJWT(*signer, testCredential)
+		testVCJWT, err := credential.SignVerifiableCredentialJWT(*signer, testCredential)
 		assert.NoError(tt, err)
 		assert.NotEmpty(tt, testVCJWT)
 
-		result, err := gate.ValidatePresentationSubmission(string(testVCJWT))
+		result, err := gate.ValidatePresentationSubmission(context.Background(), string(testVCJWT))
 		assert.Error(tt, err)
 		assert.Contains(tt, err.Error(), "parsing VP from JWT")
 		assert.False(tt, result.Valid)
 	})
 
 	t.Run("happy path - accept any valid JWT VP, EdDSA, with a credential subject", func(tt *testing.T) {
-		requesterID := "requester"
+		requesterID := "did:test:admin"
 		presentationDefinition := exchange.PresentationDefinition{
 			ID: uuid.New().String(),
 			Format: &exchange.ClaimFormat{
@@ -195,6 +201,7 @@ func TestCredentialGate(t *testing.T) {
 			},
 		}
 		gate, err := NewCredentialGate(CredentialGateConfig{
+			AdminDID:               requesterID,
 			PresentationDefinition: presentationDefinition,
 		})
 		assert.NoError(tt, err)
@@ -223,11 +230,11 @@ func TestCredentialGate(t *testing.T) {
 				"name": "Satoshi",
 			},
 		}
-		testVCJWT, err := signing.SignVerifiableCredentialJWT(*signer, testCredential)
+		testVCJWT, err := credential.SignVerifiableCredentialJWT(*signer, testCredential)
 		assert.NoError(tt, err)
 		assert.NotEmpty(tt, testVCJWT)
 		presentationClaimJWT := exchange.PresentationClaim{
-			TokenBytes:                    testVCJWT,
+			Token:                         util.StringPtr(string(testVCJWT)),
 			JWTFormat:                     exchange.JWTVC.Ptr(),
 			SignatureAlgorithmOrProofType: string(crypto.EdDSA),
 		}
@@ -238,7 +245,7 @@ func TestCredentialGate(t *testing.T) {
 		assert.NoError(tt, err)
 		assert.NotEmpty(tt, submissionJWT)
 
-		result, err := gate.ValidatePresentationSubmission(string(submissionJWT))
+		result, err := gate.ValidatePresentationSubmission(context.Background(), string(submissionJWT))
 		assert.NoError(tt, err)
 		assert.True(tt, result.Valid)
 	})
