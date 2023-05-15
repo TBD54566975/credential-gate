@@ -5,7 +5,7 @@ import (
 
 	"github.com/TBD54566975/ssi-sdk/credential"
 	"github.com/TBD54566975/ssi-sdk/credential/exchange"
-	"github.com/TBD54566975/ssi-sdk/crypto"
+	"github.com/TBD54566975/ssi-sdk/crypto/jwx"
 	didsdk "github.com/TBD54566975/ssi-sdk/did"
 	"github.com/TBD54566975/ssi-sdk/util"
 	"github.com/lestrrat-go/jwx/v2/jws"
@@ -121,18 +121,18 @@ func (cg *CredentialGate) ValidatePresentationSubmission(ctx context.Context, pr
 	}
 
 	// resolve the VP signer's DID
-	did, err := cg.resolver.Resolve(ctx, issuer)
+	resolved, err := cg.resolver.Resolve(ctx, issuer)
 	if err != nil {
 		return gateResult, util.LoggingErrorMsg(err, "resolving VP submission signer's DID")
 	}
-	pubKey, err := didsdk.GetKeyFromVerificationMethod(did.Document, kid)
+	pubKey, err := didsdk.GetKeyFromVerificationMethod(resolved.Document, kid)
 	if err != nil {
 		return gateResult, util.LoggingErrorMsg(err, "getting public key from VP signer's DID")
 	}
 
 	// verify the presentation submission and extract the submission data
 	// the admin DID is set as the audience for the verifier
-	verifier, err := crypto.NewJWTVerifier(cg.config.AdminDID, pubKey)
+	verifier, err := jwx.NewJWXVerifier(cg.config.AdminDID, kid, pubKey)
 	if err != nil {
 		return gateResult, util.LoggingErrorMsg(err, "constructing JWT verifier")
 	}

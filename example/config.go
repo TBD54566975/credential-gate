@@ -5,6 +5,7 @@ import (
 
 	"github.com/TBD54566975/ssi-sdk/credential/exchange"
 	"github.com/TBD54566975/ssi-sdk/did"
+	"github.com/TBD54566975/ssi-sdk/did/key"
 	"github.com/pkg/errors"
 
 	sdkcrypto "github.com/TBD54566975/ssi-sdk/crypto"
@@ -33,7 +34,7 @@ func newCredentialGateServerConfig() (*serverConfig, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "getting gate presentation definition")
 	}
-	privKey, didKey, err := did.GenerateDIDKey(sdkcrypto.Ed25519)
+	privKey, didKey, err := key.GenerateDIDKey(sdkcrypto.Ed25519)
 	if err != nil {
 		return nil, errors.Wrap(err, "generating admin did key")
 	}

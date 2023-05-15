@@ -10,7 +10,8 @@ import (
 	"github.com/TBD54566975/ssi-sdk/credential"
 	"github.com/TBD54566975/ssi-sdk/credential/exchange"
 	"github.com/TBD54566975/ssi-sdk/crypto"
-	"github.com/TBD54566975/ssi-sdk/did"
+	"github.com/TBD54566975/ssi-sdk/crypto/jwx"
+	"github.com/TBD54566975/ssi-sdk/did/key"
 	"github.com/TBD54566975/ssi-sdk/util"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -160,7 +161,7 @@ func (s *server) sampleHandler(w http.ResponseWriter, r *http.Request) {
 
 func getSamplePresentationSubmission(adminDID string, definition exchange.PresentationDefinition) ([]byte, error) {
 	// generate a new DID key for the submission
-	privKey, didKey, err := did.GenerateDIDKey(crypto.Ed25519)
+	privKey, didKey, err := key.GenerateDIDKey(crypto.Ed25519)
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +171,7 @@ func getSamplePresentationSubmission(adminDID string, definition exchange.Presen
 	if err != nil {
 		return nil, err
 	}
-	signer, err := crypto.NewJWTSigner(didKey.String(), expanded.VerificationMethod[0].ID, privKey)
+	signer, err := jwx.NewJWXSigner(didKey.String(), expanded.VerificationMethod[0].ID, privKey)
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +206,7 @@ func getSamplePresentationSubmission(adminDID string, definition exchange.Presen
 
 func getInvalidSamplePresentationSubmission(adminDID string, definition exchange.PresentationDefinition) ([]byte, error) {
 	// generate a new DID key for the submission
-	privKey, didKey, err := did.GenerateDIDKey(crypto.Ed25519)
+	privKey, didKey, err := key.GenerateDIDKey(crypto.Ed25519)
 	if err != nil {
 		return nil, err
 	}
@@ -215,7 +216,7 @@ func getInvalidSamplePresentationSubmission(adminDID string, definition exchange
 	if err != nil {
 		return nil, err
 	}
-	signer, err := crypto.NewJWTSigner(didKey.String(), expanded.VerificationMethod[0].ID, privKey)
+	signer, err := jwx.NewJWXSigner(didKey.String(), expanded.VerificationMethod[0].ID, privKey)
 	if err != nil {
 		return nil, err
 	}
@@ -268,5 +269,5 @@ func getInvalidSamplePresentationSubmission(adminDID string, definition exchange
 	if err != nil {
 		return nil, err
 	}
-	return credential.SignVerifiablePresentationJWT(*signer, credential.JWTVVPParameters{Audience: adminDID}, *vp)
+	return credential.SignVerifiablePresentationJWT(*signer, credential.JWTVVPParameters{Audience: []string{adminDID}}, *vp)
 }

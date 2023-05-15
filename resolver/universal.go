@@ -9,6 +9,7 @@ import (
 	urllib "net/url"
 	"time"
 
+	"github.com/TBD54566975/ssi-sdk/did/resolution"
 	"github.com/TBD54566975/ssi-sdk/util"
 	"github.com/pkg/errors"
 
@@ -26,7 +27,7 @@ type universalResolver struct {
 	supportedMethods []didsdk.Method
 }
 
-var _ didsdk.Resolver = (*universalResolver)(nil)
+var _ resolution.Resolver = (*universalResolver)(nil)
 
 func newUniversalResolver(url string) (*universalResolver, error) {
 	if url == "" {
@@ -58,7 +59,7 @@ func (ur *universalResolver) Health() error {
 }
 
 // Resolve results resolution results by doing a GET on <url>/1.0.identifiers/<did>.
-func (ur *universalResolver) Resolve(ctx context.Context, did string, _ ...didsdk.ResolutionOption) (*didsdk.ResolutionResult, error) {
+func (ur *universalResolver) Resolve(ctx context.Context, did string, _ ...resolution.ResolutionOption) (*resolution.ResolutionResult, error) {
 	url := ur.url + "/1.0/identifiers/" + did
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
@@ -74,7 +75,7 @@ func (ur *universalResolver) Resolve(ctx context.Context, did string, _ ...didsd
 	if err != nil {
 		return nil, err
 	}
-	var result didsdk.ResolutionResult
+	var result resolution.ResolutionResult
 	if err = json.Unmarshal(respBody, &result); err != nil {
 		return nil, errors.Wrap(err, "unmarshalling JSON")
 	}
