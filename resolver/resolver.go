@@ -5,13 +5,14 @@ import (
 	"fmt"
 
 	didsdk "github.com/TBD54566975/ssi-sdk/did"
+	"github.com/TBD54566975/ssi-sdk/did/resolution"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
 // Resolver can resolve DIDs using a combination of local and universal resolvers
 type Resolver struct {
-	lr didsdk.Resolver
+	lr resolution.Resolver
 	ur *universalResolver
 }
 
@@ -37,7 +38,7 @@ func NewResolver(localResolutionMethods []didsdk.Method, universalResolverURL st
 		return nil, fmt.Errorf("must provide at least one resolution method")
 	}
 
-	var lr didsdk.Resolver
+	var lr resolution.Resolver
 	var err error
 	if len(localResolutionMethods) > 0 {
 		lr, err = newLocalResolver(localResolutionMethods)
@@ -63,7 +64,7 @@ func NewResolver(localResolutionMethods []didsdk.Method, universalResolverURL st
 // Resolve resolves a DID using a combination of local and universal resolvers. The ordering is as follows:
 // 1. Try to resolve with the local resolver
 // 2. Try to resolve with the universal resolver
-func (r *Resolver) Resolve(ctx context.Context, did string, opts ...didsdk.ResolutionOption) (*didsdk.ResolutionResult, error) {
+func (r *Resolver) Resolve(ctx context.Context, did string, opts ...resolution.ResolutionOption) (*resolution.ResolutionResult, error) {
 	method, err := getMethodForDID(did)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting method for DID")

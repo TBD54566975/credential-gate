@@ -8,7 +8,8 @@ import (
 	"github.com/TBD54566975/ssi-sdk/credential"
 	"github.com/TBD54566975/ssi-sdk/credential/exchange"
 	"github.com/TBD54566975/ssi-sdk/crypto"
-	"github.com/TBD54566975/ssi-sdk/did"
+	"github.com/TBD54566975/ssi-sdk/crypto/jwx"
+	"github.com/TBD54566975/ssi-sdk/did/key"
 	"github.com/TBD54566975/ssi-sdk/util"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -79,14 +80,14 @@ func TestCustomHandler(t *testing.T) {
 		})
 		assert.NoError(tt, err)
 
-		privKey, didKey, err := did.GenerateDIDKey(crypto.Ed25519)
+		privKey, didKey, err := key.GenerateDIDKey(crypto.Ed25519)
 		assert.NoError(tt, err)
 
 		// signer for the submission
 		expanded, err := didKey.Expand()
 		assert.NoError(tt, err)
 
-		signer, err := crypto.NewJWTSigner(didKey.String(), expanded.VerificationMethod[0].ID, privKey)
+		signer, err := jwx.NewJWXSigner(didKey.String(), expanded.VerificationMethod[0].ID, privKey)
 		assert.NoError(tt, err)
 
 		testCred := getTestCredential(didKey.String(), time.Now())
@@ -125,14 +126,14 @@ func TestCustomHandler(t *testing.T) {
 		})
 		assert.NoError(tt, err)
 
-		privKey, didKey, err := did.GenerateDIDKey(crypto.Ed25519)
+		privKey, didKey, err := key.GenerateDIDKey(crypto.Ed25519)
 		assert.NoError(tt, err)
 
 		// signer for the submission
 		expanded, err := didKey.Expand()
 		assert.NoError(tt, err)
 
-		signer, err := crypto.NewJWTSigner(didKey.String(), expanded.VerificationMethod[0].ID, privKey)
+		signer, err := jwx.NewJWXSigner(didKey.String(), expanded.VerificationMethod[0].ID, privKey)
 		assert.NoError(tt, err)
 
 		testCred := getTestCredential(didKey.String(), time.Now().Add(time.Hour))

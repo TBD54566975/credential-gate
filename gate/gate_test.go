@@ -9,7 +9,8 @@ import (
 	"github.com/TBD54566975/ssi-sdk/credential"
 	"github.com/TBD54566975/ssi-sdk/credential/exchange"
 	"github.com/TBD54566975/ssi-sdk/crypto"
-	"github.com/TBD54566975/ssi-sdk/did"
+	"github.com/TBD54566975/ssi-sdk/crypto/jwx"
+	"github.com/TBD54566975/ssi-sdk/did/key"
 	"github.com/TBD54566975/ssi-sdk/schema"
 	"github.com/TBD54566975/ssi-sdk/util"
 	"github.com/google/uuid"
@@ -139,7 +140,7 @@ func TestCredentialGate(t *testing.T) {
 		assert.NoError(tt, err)
 		assert.NotEmpty(tt, gate)
 
-		privKey, didKey, err := did.GenerateDIDKey(crypto.Ed25519)
+		privKey, didKey, err := key.GenerateDIDKey(crypto.Ed25519)
 		assert.NoError(tt, err)
 		assert.NotEmpty(tt, privKey)
 		assert.NotEmpty(tt, didKey)
@@ -147,7 +148,7 @@ func TestCredentialGate(t *testing.T) {
 		// signer for the submission
 		expanded, err := didKey.Expand()
 		assert.NoError(tt, err)
-		signer, err := crypto.NewJWTSigner(didKey.String(), expanded.VerificationMethod[0].ID, privKey)
+		signer, err := jwx.NewJWXSigner(didKey.String(), expanded.VerificationMethod[0].ID, privKey)
 		assert.NoError(tt, err)
 		assert.NotEmpty(tt, signer)
 
@@ -207,7 +208,7 @@ func TestCredentialGate(t *testing.T) {
 		assert.NoError(tt, err)
 		assert.NotEmpty(tt, gate)
 
-		privKey, didKey, err := did.GenerateDIDKey(crypto.Ed25519)
+		privKey, didKey, err := key.GenerateDIDKey(crypto.Ed25519)
 		assert.NoError(tt, err)
 		assert.NotEmpty(tt, privKey)
 		assert.NotEmpty(tt, didKey)
@@ -215,7 +216,7 @@ func TestCredentialGate(t *testing.T) {
 		// signer for the submission
 		expanded, err := didKey.Expand()
 		assert.NoError(tt, err)
-		signer, err := crypto.NewJWTSigner(didKey.String(), expanded.VerificationMethod[0].ID, privKey)
+		signer, err := jwx.NewJWXSigner(didKey.String(), expanded.VerificationMethod[0].ID, privKey)
 		assert.NoError(tt, err)
 		assert.NotEmpty(tt, signer)
 

@@ -9,7 +9,8 @@ import (
 	"github.com/TBD54566975/ssi-sdk/credential"
 	"github.com/TBD54566975/ssi-sdk/credential/exchange"
 	"github.com/TBD54566975/ssi-sdk/crypto"
-	"github.com/TBD54566975/ssi-sdk/did"
+	"github.com/TBD54566975/ssi-sdk/crypto/jwx"
+	"github.com/TBD54566975/ssi-sdk/did/key"
 	"github.com/TBD54566975/ssi-sdk/schema"
 	"github.com/TBD54566975/ssi-sdk/util"
 	"github.com/google/uuid"
@@ -82,7 +83,7 @@ func TestGitHubHandlerIntegration(t *testing.T) {
 		privKey, err := crypto.BytesToPrivKey(privKeyBytes, crypto.Ed25519)
 		assert.NoError(tt, err)
 
-		didKey, err := did.CreateDIDKey(crypto.Ed25519, pubKeyBytes)
+		didKey, err := key.CreateDIDKey(crypto.Ed25519, pubKeyBytes)
 		assert.NoError(tt, err)
 		knownDID, err := didKey.Expand()
 		assert.NoError(tt, err)
@@ -99,7 +100,7 @@ func TestGitHubHandlerIntegration(t *testing.T) {
 		})
 		assert.NoError(tt, err)
 
-		signer, err := crypto.NewJWTSigner(knownDID.ID, knownVerificationMethod, privKey)
+		signer, err := jwx.NewJWXSigner(knownDID.ID, knownVerificationMethod, privKey)
 		assert.NoError(tt, err)
 
 		testCred := getTestCredential(knownDID.ID)
