@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/TBD54566975/ssi-sdk v0.0.4-alpha.0.20230515161805-36e2a2489788
 	github.com/google/uuid v1.3.0
-	github.com/lestrrat-go/jwx/v2 v2.0.9
+	github.com/lestrrat-go/jwx/v2 v2.0.10
 	github.com/magefile/mage v1.15.0
 	github.com/mr-tron/base58 v1.2.0
 	github.com/pkg/errors v0.9.1
@@ -48,7 +48,8 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/pquerna/cachecontrol v0.1.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.0 // indirect
-	golang.org/x/crypto v0.8.0 // indirect
+	github.com/segmentio/asm v1.2.0 // indirect
+	golang.org/x/crypto v0.9.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
