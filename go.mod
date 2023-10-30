@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/TBD54566975/ssi-sdk v0.0.4-alpha.0.20230515161805-36e2a2489788
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.4.0
 	github.com/lestrrat-go/jwx/v2 v2.0.9
 	github.com/magefile/mage v1.15.0
 	github.com/mr-tron/base58 v1.2.0
